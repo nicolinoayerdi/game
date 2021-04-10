@@ -41,6 +41,24 @@ class App extends React.Component {
         }
     }
 
+    addScore = () => {
+        console.log('addScore');
+        console.log(this.state.playersStats);
+        this.setState({playersStats: this.state.playersStats.map(p => {
+                return {
+                    ...p,
+                    score: p.score + 10
+                }
+            })
+        });
+        console.log(this.state.playersStats);
+    }
+
+    startInterval = () => {
+        const intervalID = window.setInterval(() => this.addScore(), 2 * 1000);
+        this.setState({...this.state, intervalID: intervalID})
+    }
+
     componentDidMount() {
         this.getRandomUser().then();
     }
@@ -54,6 +72,8 @@ class App extends React.Component {
 
         return (
             <div>
+                <button onClick={() => this.startInterval()}>START</button>
+                <button onClick={() => window.clearInterval(this.state.intervalID)}>CLEAR</button>
                 {playersStats}
             </div>
         );
