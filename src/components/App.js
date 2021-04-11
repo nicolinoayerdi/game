@@ -1,59 +1,20 @@
 import './App.css';
 import React from 'react';
-import randomuser from "../api/randomuser";
 import 'semantic-ui-css/semantic.min.css';
 import {Button, Icon, List, Image} from "semantic-ui-react";
+import format from 'date-fns/format'
+import {generatePlayersStats} from "../api/data-generator";
 
 class App extends React.Component {
 
-	state = {playersStats: []};
+	state = {playersStats: [], intervalID: undefined, loading: false};
 
-	getRandomUser = async () => {
-		try {
-			const response = await randomuser.get('', {
-				params: {
-					page: 1,
-					results: 10,
-					inc: "login, picture"
-				}
-			});
-			let playersStats = response.data.results.map(toPlayerStats);
-			this.setState({playersStats: playersStats});
-		} catch (e) {
-			console.log('error', e);
-		}
-
-		function toPlayerStats(item, index) {
-			return {
-				id: index,
-				username: item.login.username,
-				img: item.picture.medium,
-				score: Math.trunc(Math.random() * 100),
-				lastUpdate: new Date()
-			}
-		}
-	}
-
-	updateRandomPlayerStat = () => {
-		let playerStat = this.getRandomPlayerStat();
-		this.increaseScoreBy(playerStat, 10);
-		this.setState({
-			playersStats: this.state.playersStats
-		});
-	}
-
-	increaseScoreBy = (playerStat, amount) => {
-		playerStat.score += amount;
-		playerStat.lastUpdate = new Date();
-	}
-
-	getRandomPlayerStat = () => {
-		let randomIndex = Math.trunc(Math.random() * 10);
-		return this.state.playersStats[randomIndex];
+	componentDidMount() {
+		generatePlayersStats().then(playersStats => this.setState({playersStats: playersStats}));
 	}
 
 	startInterval = () => {
-		const intervalID = window.setInterval(() => this.updateRandomPlayerStat(), 5 * 1000);
+		const intervalID = window.setInterval(() => this.updateRandomPlayerStat(), 10 * 1000);
 		this.setState({...this.state, intervalID: intervalID, loading: true});
 	}
 
@@ -62,8 +23,20 @@ class App extends React.Component {
 		this.setState({...this.state, intervalID: undefined, loading: false});
 	}
 
-	componentDidMount() {
-		this.getRandomUser().then();
+	updateRandomPlayerStat = () => {
+		let playerStat = this.getRandomPlayerStat();
+		this.increaseScoreBy(playerStat, 10);
+	}
+
+	increaseScoreBy = (playerStat, amount) => {
+		playerStat.score += amount;
+		playerStat.lastUpdate = new Date();
+		this.setState({...this.state, playerStats: this.state.playersStats});
+	}
+
+	getRandomPlayerStat = () => {
+		let randomIndex = Math.trunc(Math.random() * 10);
+		return this.state.playersStats[randomIndex];
 	}
 
 	descByScore = (a, b) => {
@@ -71,8 +44,7 @@ class App extends React.Component {
 	}
 
 	formatDate = (date) => {
-		return `${date.getDate()}/${date.getMonth()}/${date.getFullYear()}
-		at ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+		return format(date, "yyyy-MM-dd' at 'HH:mm:ss");
 	}
 
 	render() {
@@ -110,7 +82,7 @@ class App extends React.Component {
 						<Icon name='pause'/>
 						Pause
 					</Button>
-					<List divided verticalAlign='middle' size="large">
+					<List divided verticalAlign='middle' size="medium">
 						{playersStats}
 					</List>
 				</div>
